@@ -27,6 +27,7 @@ const MQTT_HOST = process.env.MQTT_HOST;
 const MQTTS_PORT = +process.env.MQTTS_PORT;
 const MQTT_USER = process.env.MQTT_USER;
 const MQTT_PASSWORD = process.env.MQTT_PASSWORD;
+const MQTT_TOPIC = process.env.MQTT_TOPIC;
 
 const mqtt = require('mqtt');
 const client = mqtt.connect(`mqtt://${MQTT_HOST}:${MQTTS_PORT}`, {
@@ -39,8 +40,8 @@ const client = mqtt.connect(`mqtt://${MQTT_HOST}:${MQTTS_PORT}`, {
 
 const mqttConnect$ = new Observable((observer) => {
   client.on('connect', () => {
-    client.subscribe('linak-2-mqtt/set-desk-height');
-    client.subscribe('linak-2-mqtt/toggle-desk-position');
+    client.subscribe(`${MQTT_TOPIC}/set-desk-height`);
+    client.subscribe(`${MQTT_TOPIC}/toggle-desk-position`);
     observer.next();
   });
 }).pipe(shareReplay(1));
@@ -77,11 +78,11 @@ mqttDeskPositionCm$
         relative: heightCm - +process.env.DESK_LOWEST_HEIGHT_CM,
       });
       client.publish(
-        `linak-2-mqtt/desk-absolute-height-updated`,
+        `${MQTT_TOPIC}/desk-absolute-height-updated`,
         heightCm.toString()
       );
       client.publish(
-        `linak-2-mqtt/desk-relative-height-updated`,
+        `${MQTT_TOPIC}/desk-relative-height-updated`,
         (heightCm - +process.env.DESK_LOWEST_HEIGHT_CM).toString()
       );
     })
@@ -123,11 +124,11 @@ const clientMessage$ = mqttConnect$
   .pipe(shareReplay(1));
 
 const mqttSetHeightCommand$ = clientMessage$
-  .pipe(filter(({ topic }) => topic === `linak-2-mqtt/set-desk-height`))
+  .pipe(filter(({ topic }) => topic === `${MQTT_TOPIC}/set-desk-height`))
   .pipe(shareReplay(1));
 
 const mqttToggleDeskPositionCommand$ = clientMessage$
-  .pipe(filter(({ topic }) => topic === `linak-2-mqtt/toggle-desk-position`))
+  .pipe(filter(({ topic }) => topic === `${MQTT_TOPIC}/toggle-desk-position`))
   .pipe(shareReplay(1));
 
 mqttSetHeightCommand$
